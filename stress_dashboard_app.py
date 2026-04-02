@@ -172,26 +172,71 @@ if uploaded_file:
 
     st.download_button("Download Heatmap", save_fig(fig_corr), "heatmap.png")
 
-    # ------------------ PREDICTION ------------------
-    st.subheader("🔮 Predict Stress")
+# ------------------ PREDICTION ------------------
+st.subheader("🔮 Predict Stress")
 
-    c1, c2, c3 = st.columns(3)
+c1, c2, c3 = st.columns(3)
 
-    study = c1.number_input("Study Hours", 0.0, 24.0, 5.0)
-    sleep = c2.number_input("Sleep Hours", 0.0, 24.0, 7.0)
-    activity = c3.number_input("Activity Hours", 0.0, 10.0, 1.0)
+study = c1.number_input("Study Hours", 0.0, 24.0, 5.0)
+sleep = c2.number_input("Sleep Hours", 0.0, 24.0, 7.0)
+activity = c3.number_input("Activity Hours", 0.0, 10.0, 1.0)
 
-    if st.button("Predict"):
+total = study + sleep + activity
+st.write(f"⏱ Total Time Used: {total} hrs")
 
-        pred = model.predict([[study, sleep, activity]])
-        result = le.inverse_transform(pred)[0]
+if total > 24:
+    st.error("⚠️ Total exceeds 24 hours!")
+else:
+    st.info(f"Remaining Free Time: {24-total} hrs")
 
-        if result.lower() == "high":
-            st.error("🔴 HIGH STRESS")
-        elif result.lower() == "medium":
-            st.warning("🟡 MEDIUM STRESS")
-        else:
-            st.success("🟢 LOW STRESS")
+if st.button("Predict"):
+
+    pred = model.predict([[study, sleep, activity]])
+    result = le.inverse_transform(pred)[0]
+
+    st.subheader("🎯 Result & Recommendations")
+
+    # ------------------ HIGH ------------------
+    if result.lower() == "high":
+        st.error("🔴 HIGH STRESS")
+
+        st.markdown("### 💡 Recommended Actions:")
+        st.write("1. Increase sleep to **7–8 hours daily**")
+        st.write("2. Reduce continuous study sessions (Pomodoro technique)")
+        st.write("3. Add **30–45 mins physical activity**")
+        st.write("4. Practice meditation or breathing exercises")
+        st.write("5. Prioritize tasks and avoid overload")
+
+    # ------------------ MEDIUM ------------------
+    elif result.lower() == "medium":
+        st.warning("🟡 MEDIUM STRESS")
+
+        st.markdown("### 💡 Recommended Actions:")
+        st.write("1. Maintain balanced study schedule")
+        st.write("2. Keep consistent sleep routine (6–8 hrs)")
+        st.write("3. Include light exercise (walking/stretching)")
+        st.write("4. Plan tasks to avoid last-minute stress")
+
+    # ------------------ LOW ------------------
+    else:
+        st.success("🟢 LOW STRESS")
+
+        st.markdown("### 💡 Recommended Actions:")
+        st.write("1. Continue current healthy routine")
+        st.write("2. Maintain sleep and activity levels")
+        st.write("3. Stay socially and mentally active")
+
+    # ------------------ PERSONALIZED INSIGHTS ------------------
+    st.markdown("### 📌 Personalized Tips")
+
+    if sleep < 6:
+        st.write("👉 You are sleeping less — increase sleep")
+
+    if study > 10:
+        st.write("👉 Study hours are high — reduce overload")
+
+    if activity < 1:
+        st.write("👉 Add physical activity to reduce stress")
 
     # ------------------ BATCH ------------------
     st.subheader("📂 Batch Prediction")
