@@ -42,7 +42,7 @@ st.markdown("### 📈 Feature Distributions")
 col1, col2, col3 = st.columns(3)
 
 # Study Hours
-fig1, ax1 = plt.subplots(figsize=(3,3))
+fig1, ax1 = plt.subplots(figsize=(3,3)) 
 sns.histplot(df[selected_features[0]], kde=True, ax=ax1)
 ax1.set_title("Study Hours")
 col1.pyplot(fig1)
