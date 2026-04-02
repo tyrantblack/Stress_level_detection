@@ -163,38 +163,78 @@ if uploaded_file:
                 st.write("• Stay active")
 
     # ------------------ BATCH TEST ------------------
-    if section == "Batch Testing":
+if section == "Batch Testing":
 
-        st.subheader("📂 Upload Test Dataset")
+    st.subheader("📂 Upload Test Dataset")
 
-        test_file = st.file_uploader("Upload Excel", type=["xlsx"])
+    test_file = st.file_uploader("Upload Excel", type=["xlsx"])
 
-        if test_file:
+    if test_file:
 
-            new_df = pd.read_excel(test_file)
+        new_df = pd.read_excel(test_file)
 
-            st.dataframe(new_df.head())
+        st.write("🔍 Raw Columns Detected:")
+        st.write(list(new_df.columns))
 
-            X_new = new_df[selected_features]
-            preds = model.predict(X_new)
+        # ------------------ AUTO FIX COLUMN NAMES ------------------
+        # If no headers (common issue)
+        if len(new_df.columns) < 5:
+            st.warning("⚠️ No proper headers detected. Applying default column names.")
 
-            new_df["Predicted"] = le.inverse_transform(preds)
+            new_df.columns = [
+                "Study_Hours_Per_Day",
+                "Extracurricular_Hours_Per_Day",
+                "Sleep_Hours_Per_Day",
+                "Social_Hours_Per_Day",
+                "Physical_Activity_Hours_Per_Day",
+                "Stress_Level"
+            ]
 
-            st.subheader("📊 Predictions")
-            st.dataframe(new_df.head())
+        # Clean column names (remove spaces)
+        new_df.columns = new_df.columns.str.strip()
 
-            if "Stress_Level" in new_df.columns:
+        # ------------------ CHECK REQUIRED FEATURES ------------------
+        missing_cols = [col for col in selected_features if col not in new_df.columns]
+
+        if missing_cols:
+            st.error(f"❌ Missing required columns: {missing_cols}")
+            st.stop()
+
+        # ------------------ PROCEED ------------------
+        st.subheader("📊 Cleaned Dataset Preview")
+        st.dataframe(new_df.head())
+
+        X_new = new_df[selected_features]
+
+        preds = model.predict(X_new)
+        new_df["Predicted_Stress"] = le.inverse_transform(preds)
+
+        st.subheader("📊 Predictions")
+        st.dataframe(new_df.head())
+
+        # ------------------ PERFORMANCE ------------------
+        if "Stress_Level" in new_df.columns:
+
+            try:
                 y_true = le.transform(new_df["Stress_Level"])
 
-                st.subheader("🤖 Test Performance")
-                st.write(f"Accuracy: {round(accuracy_score(y_true, preds),2)}")
+                st.subheader("🤖 Test Dataset Performance")
+
+                acc = accuracy_score(y_true, preds)
+                st.write(f"Accuracy: {round(acc, 2)}")
+
                 st.text(classification_report(y_true, preds))
 
-            output = BytesIO()
-            new_df.to_excel(output, index=False)
-            output.seek(0)
+                fig_cm, ax = plt.subplots()
+                sns.heatmap(confusion_matrix(y_true, preds), annot=True, fmt="d", cmap="Blues", ax=ax)
+                st.pyplot(fig_cm)
 
-            st.download_button("📥 Download Results", output, "results.xlsx")
+            except:
+                st.warning("⚠️ Stress_Level column format mismatch. Cannot evaluate performance.")
 
-else:
-    st.info("📌 Please upload a dataset to begin.")
+        # ------------------ DOWNLOAD ------------------
+        output = BytesIO()
+        new_df.to_excel(output, index=False)
+        output.seek(0)
+
+        st.download_button("📥 Download Results", output, "results.xlsx")
