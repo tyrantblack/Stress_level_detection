@@ -29,6 +29,66 @@ if uploaded_file:
     st.subheader("📊 Dataset Preview")
     st.dataframe(df.head())
 
+    # ------------------ EDA SECTION ------------------
+st.subheader("📊 Exploratory Data Analysis (EDA)")
+
+# ---------- BASIC STATS ----------
+st.markdown("### 📌 Summary Statistics")
+st.dataframe(df.describe())
+
+# ---------- SMALL STRUCTURED VISUALS ----------
+st.markdown("### 📈 Feature Distributions")
+
+col1, col2, col3 = st.columns(3)
+
+# Study Hours
+fig1, ax1 = plt.subplots(figsize=(3,3))
+sns.histplot(df[selected_features[0]], kde=True, ax=ax1)
+ax1.set_title("Study Hours")
+col1.pyplot(fig1)
+
+# Sleep Hours
+fig2, ax2 = plt.subplots(figsize=(3,3))
+sns.histplot(df[selected_features[1]], kde=True, ax=ax2)
+ax2.set_title("Sleep Hours")
+col2.pyplot(fig2)
+
+# Activity
+fig3, ax3 = plt.subplots(figsize=(3,3))
+sns.histplot(df[selected_features[2]], kde=True, ax=ax3)
+ax3.set_title("Physical Activity")
+col3.pyplot(fig3)
+
+
+# ---------- STRESS DISTRIBUTION ----------
+st.markdown("### 📊 Stress Level Distribution")
+
+fig4, ax4 = plt.subplots(figsize=(4,3))
+sns.countplot(x=df["Stress_Level"], ax=ax4)
+ax4.set_title("Stress Distribution")
+st.pyplot(fig4)
+
+
+# ---------- BOXPLOTS (STRUCTURED) ----------
+st.markdown("### 📦 Feature vs Stress")
+
+c1, c2, c3 = st.columns(3)
+
+fig5, ax5 = plt.subplots(figsize=(3,3))
+sns.boxplot(x=df["Stress_Level"], y=df[selected_features[0]], ax=ax5)
+ax5.set_title("Study vs Stress")
+c1.pyplot(fig5)
+
+fig6, ax6 = plt.subplots(figsize=(3,3))
+sns.boxplot(x=df["Stress_Level"], y=df[selected_features[1]], ax=ax6)
+ax6.set_title("Sleep vs Stress")
+c2.pyplot(fig6)
+
+fig7, ax7 = plt.subplots(figsize=(3,3))
+sns.boxplot(x=df["Stress_Level"], y=df[selected_features[2]], ax=ax7)
+ax7.set_title("Activity vs Stress")
+c3.pyplot(fig7)
+
     # ------------------ SELECT FEATURES ------------------
     selected_features = [
         "Study_Hours_Per_Day",
