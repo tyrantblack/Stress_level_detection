@@ -26,12 +26,19 @@ if uploaded_file:
     st.subheader("📊 Dataset Preview")
     st.dataframe(df.head())
 
-    # ------------------ FEATURE SELECTION ------------------
+    # ------------------ SELECTED FEATURES ------------------
     selected_features = [
         "Study_Hours_Per_Day",
         "Sleep_Hours_Per_Day",
         "Physical_Activity_Hours_Per_Day"
     ]
+
+    # ------------------ CLEAN DATA ------------------
+    df = df.dropna(subset=selected_features + ["Stress_Level"])
+
+    # ------------------ ENCODE TARGET ------------------
+    le = LabelEncoder()
+    df["Stress_Level_Encoded"] = le.fit_transform(df["Stress_Level"])
 
     # ------------------ METRICS ------------------
     st.subheader("📌 Key Insights")
@@ -46,24 +53,28 @@ if uploaded_file:
     # ------------------ SPEARMAN CORRELATION ------------------
     st.subheader("📊 Spearman Correlation Analysis")
 
-    corr = df[selected_features + ["Stress_Level"]].corr(method="spearman")
+    corr = df[selected_features + ["Stress_Level_Encoded"]].corr(method="spearman")
+
+    # Rename labels for display
+    corr.columns = selected_features + ["Stress_Level"]
+    corr.index = selected_features + ["Stress_Level"]
 
     fig_corr, ax = plt.subplots()
     sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
     st.pyplot(fig_corr)
 
-    # ------------------ IMAGE DOWNLOAD ------------------
+    # ------------------ IMAGE DOWNLOAD FUNCTION ------------------
     def save_fig(fig):
         buf = BytesIO()
-        fig.savefig(buf, format="png")
+        fig.savefig(buf, format="png", bbox_inches="tight")
         buf.seek(0)
         return buf
 
     st.download_button(
-        label="📥 Download Correlation Heatmap",
-        data=save_fig(fig_corr),
-        file_name="spearman_heatmap.png",
-        mime="image/png"
+        "📥 Download Correlation Heatmap",
+        save_fig(fig_corr),
+        "spearman_heatmap.png",
+        "image/png"
     )
 
     # ------------------ BOX PLOTS ------------------
@@ -83,18 +94,15 @@ if uploaded_file:
     st.pyplot(fig_box)
 
     st.download_button(
-        label="📥 Download Boxplots",
-        data=save_fig(fig_box),
-        file_name="boxplots.png",
-        mime="image/png"
+        "📥 Download Boxplots",
+        save_fig(fig_box),
+        "boxplots.png",
+        "image/png"
     )
 
     # ------------------ MODEL ------------------
-    le = LabelEncoder()
-    df["Stress_Level"] = le.fit_transform(df["Stress_Level"])
-
     X = df[selected_features]
-    y = df["Stress_Level"]
+    y = df["Stress_Level_Encoded"]
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
@@ -131,7 +139,7 @@ if uploaded_file:
     else:
         st.info(f"Remaining Free Time: {24 - total} hrs")
 
-    # ------------------ PREDICT BUTTON ------------------
+    # ------------------ PREDICTION ------------------
     if st.button("🚀 Predict Stress"):
 
         input_data = np.array([[study, sleep, activity]])
@@ -140,50 +148,47 @@ if uploaded_file:
 
         st.subheader("🎯 Prediction Result")
 
-        # ------------------ PROFESSIONAL SUGGESTIONS ------------------
         if result.lower() == "high":
             st.error("🔴 HIGH STRESS")
 
             st.markdown("### 💡 Recommendations:")
-            st.write("• Increase sleep to at least 7–8 hours")
-            st.write("• Reduce continuous study sessions (use Pomodoro)")
-            st.write("• Include daily physical activity (≥30 mins)")
-            st.write("• Practice mindfulness or breathing exercises")
-            st.write("• Take regular breaks to avoid burnout")
+            st.write("• Increase sleep to 7–8 hours")
+            st.write("• Reduce study overload")
+            st.write("• Add daily exercise (30+ mins)")
+            st.write("• Practice relaxation techniques")
+            st.write("• Take frequent breaks")
 
         elif result.lower() == "medium":
             st.warning("🟡 MEDIUM STRESS")
 
             st.markdown("### 💡 Recommendations:")
-            st.write("• Maintain balanced study schedule")
-            st.write("• Ensure consistent sleep routine")
-            st.write("• Add light exercise or walking")
-            st.write("• Avoid last-minute workload spikes")
+            st.write("• Maintain balanced routine")
+            st.write("• Avoid last-minute stress")
+            st.write("• Light exercise recommended")
+            st.write("• Keep consistent sleep schedule")
 
         else:
             st.success("🟢 LOW STRESS")
 
             st.markdown("### 💡 Recommendations:")
-            st.write("• Maintain your current routine")
-            st.write("• Keep consistent sleep and activity levels")
-            st.write("• Continue stress management habits")
-            st.write("• Stay socially engaged and active")
+            st.write("• Maintain current lifestyle")
+            st.write("• Continue healthy habits")
+            st.write("• Stay active and social")
 
         # ------------------ FEATURE IMPORTANCE ------------------
         st.subheader("📊 Feature Importance")
 
         importance = model.feature_importances_
-        features = selected_features
 
         fig_imp, ax = plt.subplots()
-        sns.barplot(x=importance, y=features, ax=ax)
+        sns.barplot(x=importance, y=selected_features, ax=ax)
         st.pyplot(fig_imp)
 
         st.download_button(
-            label="📥 Download Feature Importance",
-            data=save_fig(fig_imp),
-            file_name="feature_importance.png",
-            mime="image/png"
+            "📥 Download Feature Importance",
+            save_fig(fig_imp),
+            "feature_importance.png",
+            "image/png"
         )
 
     # ------------------ DISTRIBUTION ------------------
@@ -199,10 +204,10 @@ if uploaded_file:
         st.pyplot(fig_dist)
 
         st.download_button(
-            label="📥 Download Distribution",
-            data=save_fig(fig_dist),
-            file_name="distribution.png",
-            mime="image/png"
+            "📥 Download Distribution",
+            save_fig(fig_dist),
+            "distribution.png",
+            "image/png"
         )
 
         st.write(dist)
@@ -210,8 +215,8 @@ if uploaded_file:
     # ------------------ FINAL SUMMARY ------------------
     st.subheader("📄 Summary Report")
 
-    st.write("✔ Spearman correlation used for robust relationship analysis")
-    st.write("✔ Sleep strongly impacts stress reduction")
+    st.write("✔ Spearman correlation used for robust analysis")
+    st.write("✔ Sleep strongly reduces stress levels")
     st.write("✔ High study hours increase stress risk")
-    st.write("✔ Physical activity improves mental well-being")
+    st.write("✔ Physical activity improves mental health")
     st.write("✔ Balanced routine leads to optimal performance")
