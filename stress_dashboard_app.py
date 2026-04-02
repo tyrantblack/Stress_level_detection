@@ -29,66 +29,6 @@ if uploaded_file:
     st.subheader("📊 Dataset Preview")
     st.dataframe(df.head())
 
-    # ------------------ EDA SECTION ------------------
-st.subheader("📊 Exploratory Data Analysis (EDA)")
-
-# ---------- BASIC STATS ----------
-st.markdown("### 📌 Summary Statistics")
-st.dataframe(df.describe())
-
-# ---------- SMALL STRUCTURED VISUALS ----------
-st.markdown("### 📈 Feature Distributions")
-
-col1, col2, col3 = st.columns(3)
-
-# Study Hours
-fig1, ax1 = plt.subplots(figsize=(3,3)) 
-sns.histplot(df[selected_features[0]], kde=True, ax=ax1)
-ax1.set_title("Study Hours")
-col1.pyplot(fig1)
-
-# Sleep Hours
-fig2, ax2 = plt.subplots(figsize=(3,3))
-sns.histplot(df[selected_features[1]], kde=True, ax=ax2)
-ax2.set_title("Sleep Hours")
-col2.pyplot(fig2)
-
-# Activity
-fig3, ax3 = plt.subplots(figsize=(3,3))
-sns.histplot(df[selected_features[2]], kde=True, ax=ax3)
-ax3.set_title("Physical Activity")
-col3.pyplot(fig3)
-
-
-# ---------- STRESS DISTRIBUTION ----------
-st.markdown("### 📊 Stress Level Distribution")
-
-fig4, ax4 = plt.subplots(figsize=(4,3))
-sns.countplot(x=df["Stress_Level"], ax=ax4)
-ax4.set_title("Stress Distribution")
-st.pyplot(fig4)
-
-
-# ---------- BOXPLOTS (STRUCTURED) ----------
-st.markdown("### 📦 Feature vs Stress")
-
-c1, c2, c3 = st.columns(3)
-
-fig5, ax5 = plt.subplots(figsize=(3,3))
-sns.boxplot(x=df["Stress_Level"], y=df[selected_features[0]], ax=ax5)
-ax5.set_title("Study vs Stress")
-c1.pyplot(fig5)
-
-fig6, ax6 = plt.subplots(figsize=(3,3))
-sns.boxplot(x=df["Stress_Level"], y=df[selected_features[1]], ax=ax6)
-ax6.set_title("Sleep vs Stress")
-c2.pyplot(fig6)
-
-fig7, ax7 = plt.subplots(figsize=(3,3))
-sns.boxplot(x=df["Stress_Level"], y=df[selected_features[2]], ax=ax7)
-ax7.set_title("Activity vs Stress")
-c3.pyplot(fig7)
-
     # ------------------ SELECT FEATURES ------------------
     selected_features = [
         "Study_Hours_Per_Day",
@@ -96,7 +36,52 @@ c3.pyplot(fig7)
         "Physical_Activity_Hours_Per_Day"
     ]
 
+    # ------------------ CLEAN ------------------
     df = df.dropna(subset=selected_features + ["Stress_Level"])
+
+    # ------------------ EDA ------------------
+    st.subheader("📊 Exploratory Data Analysis")
+
+    st.markdown("### 📌 Summary Statistics")
+    st.dataframe(df.describe())
+
+    st.markdown("### 📈 Feature Distributions")
+    col1, col2, col3 = st.columns(3)
+
+    fig1, ax1 = plt.subplots(figsize=(3,3))
+    sns.histplot(df[selected_features[0]], kde=True, ax=ax1)
+    ax1.set_title("Study Hours")
+    col1.pyplot(fig1)
+
+    fig2, ax2 = plt.subplots(figsize=(3,3))
+    sns.histplot(df[selected_features[1]], kde=True, ax=ax2)
+    ax2.set_title("Sleep Hours")
+    col2.pyplot(fig2)
+
+    fig3, ax3 = plt.subplots(figsize=(3,3))
+    sns.histplot(df[selected_features[2]], kde=True, ax=ax3)
+    ax3.set_title("Activity")
+    col3.pyplot(fig3)
+
+    st.markdown("### 📊 Stress Distribution")
+    fig4, ax4 = plt.subplots(figsize=(4,3))
+    sns.countplot(x=df["Stress_Level"], ax=ax4)
+    st.pyplot(fig4)
+
+    st.markdown("### 📦 Feature vs Stress")
+    c1, c2, c3 = st.columns(3)
+
+    fig5, ax5 = plt.subplots(figsize=(3,3))
+    sns.boxplot(x=df["Stress_Level"], y=df[selected_features[0]], ax=ax5)
+    c1.pyplot(fig5)
+
+    fig6, ax6 = plt.subplots(figsize=(3,3))
+    sns.boxplot(x=df["Stress_Level"], y=df[selected_features[1]], ax=ax6)
+    c2.pyplot(fig6)
+
+    fig7, ax7 = plt.subplots(figsize=(3,3))
+    sns.boxplot(x=df["Stress_Level"], y=df[selected_features[2]], ax=ax7)
+    c3.pyplot(fig7)
 
     # ------------------ ENCODE ------------------
     le = LabelEncoder()
@@ -140,63 +125,54 @@ c3.pyplot(fig7)
 
     model.fit(X_train, y_train)
 
-    # ------------------ PREDICTION ------------------
-    y_pred = model.predict(X_test)
-
     # ------------------ PERFORMANCE ------------------
     st.subheader("🤖 Model Performance")
 
-    acc = accuracy_score(y_test, y_pred)
-    st.write(f"**Accuracy:** {round(acc, 3)}")
+    y_pred = model.predict(X_test)
 
-    st.text("Classification Report:")
+    st.write(f"Accuracy: {round(accuracy_score(y_test, y_pred),3)}")
     st.text(classification_report(y_test, y_pred))
 
     # ------------------ CONFUSION MATRIX ------------------
     st.subheader("📊 Confusion Matrix")
 
-    cm = confusion_matrix(y_test, y_pred)
-    fig_cm, ax = plt.subplots()
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", ax=ax)
+    fig_cm, ax = plt.subplots(figsize=(4,3))
+    sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt="d", cmap="Blues", ax=ax)
     st.pyplot(fig_cm)
 
-    # ------------------ ROC CURVE ------------------
+    # ------------------ ROC ------------------
     st.subheader("📈 ROC Curve")
 
     y_test_bin = label_binarize(y_test, classes=[0,1,2])
     y_score = model.predict_proba(X_test)
 
-    fig_roc, ax = plt.subplots()
-
+    fig_roc, ax = plt.subplots(figsize=(4,3))
     for i in range(3):
         fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_score[:, i])
-        roc_auc = auc(fpr, tpr)
-        ax.plot(fpr, tpr, label=f'Class {i} (AUC={roc_auc:.2f})')
+        ax.plot(fpr, tpr, label=f"Class {i}")
 
-    ax.plot([0,1],[0,1],'--')
     ax.legend()
     st.pyplot(fig_roc)
 
     # ------------------ SPEARMAN ------------------
     st.subheader("📊 Spearman Correlation")
 
-    df_corr = df.copy()
-    corr = df_corr[selected_features + ["Stress_Level"]].corr(method="spearman")
+    corr = df[selected_features + ["Stress_Level"]].corr(method="spearman")
 
-    fig_corr, ax = plt.subplots()
+    fig_corr, ax = plt.subplots(figsize=(4,3))
     sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
     st.pyplot(fig_corr)
 
-    # ------------------ DOWNLOAD IMAGE ------------------
+    # ------------------ DOWNLOAD ------------------
     def save_fig(fig):
         buf = BytesIO()
         fig.savefig(buf, format="png", bbox_inches="tight")
         buf.seek(0)
         return buf
 
-    st.download_button("📥 Download Heatmap", save_fig(fig_corr), "heatmap.png")
+    st.download_button("Download Heatmap", save_fig(fig_corr), "heatmap.png")
 
-    # ------------------ PREDICT UI ------------------
+    # ------------------ PREDICTION ------------------
     st.subheader("🔮 Predict Stress")
 
     c1, c2, c3 = st.columns(3)
@@ -210,30 +186,17 @@ c3.pyplot(fig7)
         pred = model.predict([[study, sleep, activity]])
         result = le.inverse_transform(pred)[0]
 
-        st.subheader("🎯 Result")
-
         if result.lower() == "high":
             st.error("🔴 HIGH STRESS")
-            st.write("• Increase sleep (7–8 hrs)")
-            st.write("• Reduce study overload")
-            st.write("• Add exercise")
-            st.write("• Practice mindfulness")
-
         elif result.lower() == "medium":
             st.warning("🟡 MEDIUM STRESS")
-            st.write("• Maintain balance")
-            st.write("• Avoid last-minute work")
-            st.write("• Light physical activity")
-
         else:
             st.success("🟢 LOW STRESS")
-            st.write("• Maintain routine")
-            st.write("• Stay active and consistent")
 
-    # ------------------ EXTERNAL FILE PREDICTION ------------------
+    # ------------------ BATCH ------------------
     st.subheader("📂 Batch Prediction")
 
-    test_file = st.file_uploader("Upload Excel for Prediction", type=["xlsx"])
+    test_file = st.file_uploader("Upload Excel", type=["xlsx"])
 
     if test_file:
         new_df = pd.read_excel(test_file, header=None)
@@ -247,10 +210,8 @@ c3.pyplot(fig7)
             "Stress_Level"
         ]
 
-        X_new = new_df[selected_features]
-
-        preds = model.predict(X_new)
-        new_df["Predicted_Stress"] = le.inverse_transform(preds)
+        preds = model.predict(new_df[selected_features])
+        new_df["Predicted"] = le.inverse_transform(preds)
 
         st.dataframe(new_df.head())
 
@@ -258,4 +219,4 @@ c3.pyplot(fig7)
         new_df.to_excel(output, index=False)
         output.seek(0)
 
-        st.download_button("📥 Download Predictions", output, "predictions.xlsx")
+        st.download_button("Download Results", output, "predictions.xlsx")
