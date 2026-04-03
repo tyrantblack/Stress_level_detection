@@ -147,7 +147,13 @@ if uploaded_file:
         study = c1.number_input("Study Hours", 0.0, 24.0, 5.0)
         sleep = c2.number_input("Sleep Hours", 0.0, 24.0, 7.0)
         activity = c3.number_input("Activity Hours", 0.0, 10.0, 1.0)
-
+        name = st.text_input("Enter Your Name")
+        if st.button("Predict"):
+            
+            if name.strip() == "":
+                st.warning("⚠️ Please enter your name")
+                st.stop()
+                
         if st.button("Predict"):
 
             pred = model.predict([[study, sleep, activity]])
@@ -186,6 +192,7 @@ if uploaded_file:
                 st.write("• Maintain social interaction and positive habits")
                         
             user_data = pd.DataFrame({
+                "Name": [name],
                 "Study_Hours": [study],
                 "Sleep_Hours": [sleep],
                 "Activity_Hours": [activity],
