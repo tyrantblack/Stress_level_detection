@@ -202,10 +202,10 @@ if uploaded_file:
         
             st.success("✅ Prediction saved successfully")  
 
-    # ------------------ USER HISTORY ------------------
-    if section == "User History":
+# ------------------ USER HISTORY ------------------
+if section == "User History":
 
-        st.subheader("📁 Saved User Predictions")
+    st.subheader("📁 Saved User Predictions")
 
     import os
 
@@ -215,8 +215,16 @@ if uploaded_file:
 
         st.dataframe(hist_df)
 
-        st.subheader("📊 Stress Distribution")
-        st.bar_chart(hist_df["Predicted_Stress"].value_counts())
+        # ------------------ PIE CHART ------------------
+        st.subheader("📊 Stress Distribution (Pie Chart)")
+
+        counts = hist_df["Predicted_Stress"].value_counts()
+
+        fig, ax = plt.subplots()
+        ax.pie(counts, labels=counts.index, autopct='%1.1f%%', startangle=90)
+        ax.axis('equal')  # makes circle proper
+
+        st.pyplot(fig)
 
     else:
         st.warning("⚠️ No saved data yet")
