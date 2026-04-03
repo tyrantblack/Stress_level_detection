@@ -143,11 +143,11 @@ if uploaded_file:
         st.subheader("🔮 Predict Stress Level")
     
         c1, c2, c3 = st.columns(3)
-        name = st.text_input("Enter Your Name")
+    
         study = c1.number_input("Study Hours", 0.0, 24.0, 5.0)
         sleep = c2.number_input("Sleep Hours", 0.0, 24.0, 7.0)
         activity = c3.number_input("Activity Hours", 0.0, 10.0, 1.0)
-    
+        name = st.text_input("Enter Your Name")
         if st.button("Predict"):
     
             # ✅ validation inside same block
