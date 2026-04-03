@@ -69,15 +69,28 @@ if section == "Upload & EDA":
         ax.set_title(col.replace("_", " "))
         [c1, c2, c3][i].pyplot(fig)
 
-    # ------------------ SPEARMAN CORRELATION ------------------
+# ------------------ SPEARMAN CORRELATION ONLY ------------------
     st.subheader("🔗 Spearman Correlation Heatmap")
-
+    
+    # Create safe copy
+    temp_df = df.copy()
+    
+    # Encode Stress_Level if needed
+    if temp_df["Stress_Level"].dtype == "object":
+        from sklearn.preprocessing import LabelEncoder
+        le_temp = LabelEncoder()
+        temp_df["Stress_Level"] = le_temp.fit_transform(temp_df["Stress_Level"])
+    
+    # Select only required columns
+    corr_df = temp_df[selected_features + ["Stress_Level"]]
+    
+    # Compute Spearman correlation
+    corr = corr_df.corr(method="spearman")
+    
+    # Plot
     fig, ax = plt.subplots(figsize=(6,5))
-    sns.heatmap(temp_df.corr(method='spearman'), annot=True, cmap='coolwarm', ax=ax)
-    ax.set_title("Spearman Correlation Heatmap")
+    sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
     st.pyplot(fig)
-
-    st.markdown("---")
     # ------------------ STRESS DISTRIBUTION ------------------
     st.subheader("📊 Stress Level Distribution")
 
