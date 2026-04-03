@@ -240,88 +240,85 @@ if section == "User History":
                 
 # ------------------ BATCH TEST ------------------
 if section == "Batch Testing":
+
     st.subheader("📂 Upload Test Dataset")
 
     test_file = st.file_uploader("Upload Excel", type=["xlsx"])
 
-        if test_file:
+    if test_file:
 
-            new_df = pd.read_excel(test_file)
+        new_df = pd.read_excel(test_file)
 
-            st.write("🔍 Raw Columns Detected:")
-            st.write(list(new_df.columns))
+        st.write("🔍 Raw Columns Detected:")
+        st.write(list(new_df.columns))
 
-            new_df.columns = new_df.columns.str.strip()
+        new_df.columns = new_df.columns.str.strip()
 
-            missing_cols = [col for col in selected_features if col not in new_df.columns]
+        missing_cols = [col for col in selected_features if col not in new_df.columns]
 
-            if missing_cols:
-                st.error(f"❌ Missing required columns: {missing_cols}")
-                st.stop()
+        if missing_cols:
+            st.error(f"❌ Missing required columns: {missing_cols}")
+            st.stop()
 
-            st.subheader("📊 Cleaned Dataset Preview")
-            st.dataframe(new_df.head())
+        st.subheader("📊 Cleaned Dataset Preview")
+        st.dataframe(new_df.head())
 
-            X_new = new_df[selected_features]
+        X_new = new_df[selected_features]
 
-            preds = model.predict(X_new)
-            new_df["Predicted_Stress"] = le.inverse_transform(preds)
+        preds = model.predict(X_new)
+        new_df["Predicted_Stress"] = le.inverse_transform(preds)
 
-            st.subheader("📊 Predictions")
-            st.dataframe(new_df.head())
+        st.subheader("📊 Predictions")
+        st.dataframe(new_df.head())
 
-            # 🔥 ADDITION 3: DISTRIBUTION
-            st.subheader("📊 Prediction Distribution")
-            st.bar_chart(new_df["Predicted_Stress"].value_counts())
+        # 🔥 DISTRIBUTION
+        st.subheader("📊 Prediction Distribution")
+        st.bar_chart(new_df["Predicted_Stress"].value_counts())
 
-            if "Stress_Level" in new_df.columns:
+        if "Stress_Level" in new_df.columns:
 
-                try:
-                    y_true = le.transform(new_df["Stress_Level"])
+            try:
+                y_true = le.transform(new_df["Stress_Level"])
 
-                    st.subheader("🤖 Test Dataset Performance")
+                st.subheader("🤖 Test Dataset Performance")
 
-                    acc = accuracy_score(y_true, preds)
-                    st.write(f"Accuracy: {round(acc, 2)}")
+                acc = accuracy_score(y_true, preds)
+                st.write(f"Accuracy: {round(acc, 2)}")
 
-                    st.text(classification_report(y_true, preds))
+                st.text(classification_report(y_true, preds))
 
-                    fig_cm, ax = plt.subplots()
-                    sns.heatmap(confusion_matrix(y_true, preds), annot=True, fmt="d", cmap="Blues", ax=ax)
-                    st.pyplot(fig_cm)
+                fig_cm, ax = plt.subplots()
+                sns.heatmap(confusion_matrix(y_true, preds), annot=True, fmt="d", cmap="Blues", ax=ax)
+                st.pyplot(fig_cm)
 
-                    # 🔥 ADDITION 4: ROC FOR BATCH
-                    y_bin = label_binarize(y_true, classes=np.unique(y))
-                    y_score = model.predict_proba(X_new)
+                # 🔥 ROC
+                y_bin = label_binarize(y_true, classes=np.unique(y))
+                y_score = model.predict_proba(X_new)
 
-                    fig_roc, ax = plt.subplots()
-                    for i in range(len(np.unique(y))):
-                        fpr, tpr, _ = roc_curve(y_bin[:, i], y_score[:, i])
-                        roc_auc = auc(fpr, tpr)
-                        ax.plot(fpr, tpr, label=f"Class {i} (AUC={roc_auc:.2f})")
-                    ax.legend()
-                    st.pyplot(fig_roc)
+                fig_roc, ax = plt.subplots()
+                for i in range(len(np.unique(y))):
+                    fpr, tpr, _ = roc_curve(y_bin[:, i], y_score[:, i])
+                    roc_auc = auc(fpr, tpr)
+                    ax.plot(fpr, tpr, label=f"Class {i} (AUC={roc_auc:.2f})")
+                ax.legend()
+                st.pyplot(fig_roc)
 
-                except:
-                    st.warning("⚠️ Stress_Level format mismatch. Cannot evaluate.")
+            except:
+                st.warning("⚠️ Stress_Level format mismatch. Cannot evaluate.")
 
-            output = BytesIO()
-            new_df.to_excel(output, index=False)
-            output.seek(0)
+        # DOWNLOAD FILE
+        output = BytesIO()
+        new_df.to_excel(output, index=False)
+        output.seek(0)
 
-            st.download_button("📥 Download Results", output, "results.xlsx")
-
-    # 🔥 ADDITION 5: SUMMARY
-    st.sidebar.subheader("📌 Model Summary")
-    st.sidebar.write(f"""
-    Samples: {len(df)}
-    Features: {selected_features}
-    Model: Random Forest
-    SMOTE Applied
-    """)
-
-else:
-    st.info("📌 Please upload a training dataset to proceed.")
-
+        st.download_button("📥 Download Results", output, "results.xlsx")
+# 🔥 ADDITION 5: SUMMARY
+st.sidebar.subheader("📌 Model Summary")
+st.sidebar.write(f"""
+Samples: {len(df)}
+Features: {selected_features}
+Model: Random Forest
+SMOTE Applied
+""")
 
 
