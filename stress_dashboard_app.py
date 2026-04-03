@@ -311,7 +311,6 @@ if section == "Batch Testing":
 
         st.download_button("📥 Download Results", output, "results.xlsx")
 # 🔥 ADDITION 5: SUMMARY
-df = pd.read_csv(uploaded_file)
 st.sidebar.subheader("📌 Model Summary")
 st.sidebar.write(f"""
 Samples: {len(df)}
