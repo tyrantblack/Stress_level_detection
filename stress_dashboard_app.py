@@ -157,21 +157,44 @@ if uploaded_file:
 
             if result.lower() == "high":
                 st.error("🔴 HIGH STRESS")
-                st.write("• Increase sleep (7–8 hrs)")
-                st.write("• Reduce study overload")
-                st.write("• Add physical activity")
-                st.write("• Practice mindfulness")
+            
+                st.write("• Increase sleep duration to 7–8 hours daily for recovery")
+                st.write("• Reduce excessive study hours and avoid continuous long sessions")
+                st.write("• Follow structured study techniques (e.g., Pomodoro method)")
+                st.write("• Engage in at least 30 minutes of physical activity daily")
+                st.write("• Practice mindfulness, meditation, or deep breathing exercises")
+                st.write("• Take regular breaks and limit screen exposure")
+                st.write("• Prioritize important tasks and avoid multitasking overload")
 
             elif result.lower() == "medium":
                 st.warning("🟡 MEDIUM STRESS")
-                st.write("• Maintain balance")
-                st.write("• Avoid last-minute work")
-                st.write("• Light exercise")
-
+            
+                st.write("• Maintain a balanced routine between study, sleep, and activity")
+                st.write("• Avoid last-minute workload and plan tasks in advance")
+                st.write("• Include light physical activities like walking or stretching")
+                st.write("• Ensure consistent sleep schedule (6–8 hours)")
+                st.write("• Take short breaks during study sessions")
+                st.write("• Practice basic relaxation techniques when feeling overwhelmed")
             else:
                 st.success("🟢 LOW STRESS")
-                st.write("• Maintain routine")
-                st.write("• Stay consistent")
+            
+                st.write("• Maintain your current healthy lifestyle and routine")
+                st.write("• Continue consistent sleep and activity patterns")
+                st.write("• Stay organized with your daily tasks")
+                st.write("• Engage in hobbies and recreational activities")
+                st.write("• Monitor stress levels periodically to avoid sudden spikes")
+                st.write("• Maintain social interaction and positive habits")
+                
+    st.subheader("📌 Personalized Insights")
+    
+    if study > 10:
+        st.write("• High study hours detected — consider reducing workload")
+    
+    if sleep < 6:
+        st.write("• Low sleep detected — increase rest time")
+    
+    if activity < 1:
+        st.write("• Low physical activity — try to include exercise in routine")
 
     # ------------------ BATCH TEST ------------------
     if section == "Batch Testing":
