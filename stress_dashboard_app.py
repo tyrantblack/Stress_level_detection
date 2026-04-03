@@ -8,8 +8,7 @@ import random
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, label_binarize
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_curve, auc
-from sklearn.utils.class_weight import compute_class_weight
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_curve
 from sklearn.ensemble import RandomForestClassifier
 from imblearn.over_sampling import SMOTE
 
@@ -36,6 +35,7 @@ if uploaded_file:
         "Physical_Activity_Hours_Per_Day"
     ]
 
+    # Drop missing values
     df = df.dropna(subset=selected_features + ["Stress_Level"])
 
     # ------------------ EDA ------------------
@@ -74,6 +74,7 @@ if uploaded_file:
     np.random.seed(42)
     random.seed(42)
 
+    # Add noise (optional realism)
     noise_idx = np.random.choice(len(df), size=int(0.1 * len(df)), replace=False)
     df.loc[noise_idx, 'Stress_Level'] = np.random.randint(0, df['Stress_Level'].nunique(), len(noise_idx))
 
@@ -112,12 +113,12 @@ if uploaded_file:
         sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt="d", cmap="Blues", ax=ax)
         st.pyplot(fig_cm)
 
-        # ROC
-        y_test_bin = label_binarize(y_test, classes=[0,1,2])
+        # ROC Curve
+        y_test_bin = label_binarize(y_test, classes=np.unique(y))
         y_score = model.predict_proba(X_test)
 
         fig_roc, ax = plt.subplots(figsize=(4,3))
-        for i in range(3):
+        for i in range(len(np.unique(y))):
             fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_score[:, i])
             ax.plot(fpr, tpr, label=f"Class {i}")
         ax.legend()
@@ -147,94 +148,79 @@ if uploaded_file:
                 st.write("• Reduce study overload")
                 st.write("• Add physical activity")
                 st.write("• Practice mindfulness")
-                st.write("• Prioritize tasks")
 
             elif result.lower() == "medium":
                 st.warning("🟡 MEDIUM STRESS")
                 st.write("• Maintain balance")
                 st.write("• Avoid last-minute work")
                 st.write("• Light exercise")
-                st.write("• Proper planning")
 
             else:
                 st.success("🟢 LOW STRESS")
                 st.write("• Maintain routine")
                 st.write("• Stay consistent")
-                st.write("• Stay active")
 
     # ------------------ BATCH TEST ------------------
-if section == "Batch Testing":
+    if section == "Batch Testing":
 
-    st.subheader("📂 Upload Test Dataset")
+        st.subheader("📂 Upload Test Dataset")
 
-    test_file = st.file_uploader("Upload Excel", type=["xlsx"])
+        test_file = st.file_uploader("Upload Excel", type=["xlsx"])
 
-    if test_file:
+        if test_file:
 
-        new_df = pd.read_excel(test_file)
+            new_df = pd.read_excel(test_file)
 
-        st.write("🔍 Raw Columns Detected:")
-        st.write(list(new_df.columns))
+            st.write("🔍 Raw Columns Detected:")
+            st.write(list(new_df.columns))
 
-        # ------------------ AUTO FIX COLUMN NAMES ------------------
-        # If no headers (common issue)
-        if len(new_df.columns) < 5:
-            st.warning("⚠️ No proper headers detected. Applying default column names.")
+            # Clean column names
+            new_df.columns = new_df.columns.str.strip()
 
-            new_df.columns = [
-                "Study_Hours_Per_Day",
-                "Extracurricular_Hours_Per_Day",
-                "Sleep_Hours_Per_Day",
-                "Social_Hours_Per_Day",
-                "Physical_Activity_Hours_Per_Day",
-                "Stress_Level"
-            ]
+            # Check required columns
+            missing_cols = [col for col in selected_features if col not in new_df.columns]
 
-        # Clean column names (remove spaces)
-        new_df.columns = new_df.columns.str.strip()
+            if missing_cols:
+                st.error(f"❌ Missing required columns: {missing_cols}")
+                st.stop()
 
-        # ------------------ CHECK REQUIRED FEATURES ------------------
-        missing_cols = [col for col in selected_features if col not in new_df.columns]
+            st.subheader("📊 Cleaned Dataset Preview")
+            st.dataframe(new_df.head())
 
-        if missing_cols:
-            st.error(f"❌ Missing required columns: {missing_cols}")
-            st.stop()
+            X_new = new_df[selected_features]
 
-        # ------------------ PROCEED ------------------
-        st.subheader("📊 Cleaned Dataset Preview")
-        st.dataframe(new_df.head())
+            preds = model.predict(X_new)
+            new_df["Predicted_Stress"] = le.inverse_transform(preds)
 
-        X_new = new_df[selected_features]
+            st.subheader("📊 Predictions")
+            st.dataframe(new_df.head())
 
-        preds = model.predict(X_new)
-        new_df["Predicted_Stress"] = le.inverse_transform(preds)
+            # ------------------ PERFORMANCE ------------------
+            if "Stress_Level" in new_df.columns:
 
-        st.subheader("📊 Predictions")
-        st.dataframe(new_df.head())
+                try:
+                    y_true = le.transform(new_df["Stress_Level"])
 
-        # ------------------ PERFORMANCE ------------------
-        if "Stress_Level" in new_df.columns:
+                    st.subheader("🤖 Test Dataset Performance")
 
-            try:
-                y_true = le.transform(new_df["Stress_Level"])
+                    acc = accuracy_score(y_true, preds)
+                    st.write(f"Accuracy: {round(acc, 2)}")
 
-                st.subheader("🤖 Test Dataset Performance")
+                    st.text(classification_report(y_true, preds))
 
-                acc = accuracy_score(y_true, preds)
-                st.write(f"Accuracy: {round(acc, 2)}")
+                    fig_cm, ax = plt.subplots()
+                    sns.heatmap(confusion_matrix(y_true, preds), annot=True, fmt="d", cmap="Blues", ax=ax)
+                    st.pyplot(fig_cm)
 
-                st.text(classification_report(y_true, preds))
+                except:
+                    st.warning("⚠️ Stress_Level format mismatch. Cannot evaluate.")
 
-                fig_cm, ax = plt.subplots()
-                sns.heatmap(confusion_matrix(y_true, preds), annot=True, fmt="d", cmap="Blues", ax=ax)
-                st.pyplot(fig_cm)
+            # ------------------ DOWNLOAD ------------------
+            output = BytesIO()
+            new_df.to_excel(output, index=False)
+            output.seek(0)
 
-            except:
-                st.warning("⚠️ Stress_Level column format mismatch. Cannot evaluate performance.")
+            st.download_button("📥 Download Results", output, "results.xlsx")
 
-        # ------------------ DOWNLOAD ------------------
-        output = BytesIO()
-        new_df.to_excel(output, index=False)
-        output.seek(0)
-
-        st.download_button("📥 Download Results", output, "results.xlsx")
+else:
+    st.info("📌 Please upload a training dataset to proceed.")
