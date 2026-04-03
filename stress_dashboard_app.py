@@ -138,7 +138,7 @@ if uploaded_file:
         st.pyplot(fig_roc)
 
     # ------------------ PREDICTION ------------------
-       if section == "Prediction":
+    if section == "Prediction":
     
         st.subheader("🔮 Predict Stress Level")
     
