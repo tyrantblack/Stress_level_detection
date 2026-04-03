@@ -69,15 +69,20 @@ if section == "Upload & EDA":
         ax.set_title(col.replace("_", " "))
         [c1, c2, c3][i].pyplot(fig)
 
-    # ------------------ SPEARMAN CORRELATION ------------------
+# ------------------ SPEARMAN CORRELATION ------------------
     st.subheader("🔗 Spearman Correlation Heatmap")
-
-    corr = df[selected_features + ["Stress_Level"]].corr(method='spearman')
-
+    
+    corr_df = df[selected_features + ["Stress_Level"]].copy()
+    
+    # Convert to numeric (fix for error)
+    for col in corr_df.columns:
+        corr_df[col] = pd.to_numeric(corr_df[col], errors='coerce')
+    
+    corr = corr_df.corr(method='spearman')
+    
     fig, ax = plt.subplots()
     sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
     st.pyplot(fig)
-
     # ------------------ STRESS DISTRIBUTION ------------------
     st.subheader("📊 Stress Level Distribution")
 
