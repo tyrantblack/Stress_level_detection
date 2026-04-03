@@ -238,12 +238,11 @@ if section == "User History":
     else:
         st.warning("⚠️ No saved data yet")
                 
-    # ------------------ BATCH TEST ------------------
-    if section == "Batch Testing":
+# ------------------ BATCH TEST ------------------
+if section == "Batch Testing":
+    st.subheader("📂 Upload Test Dataset")
 
-        st.subheader("📂 Upload Test Dataset")
-
-        test_file = st.file_uploader("Upload Excel", type=["xlsx"])
+    test_file = st.file_uploader("Upload Excel", type=["xlsx"])
 
         if test_file:
 
