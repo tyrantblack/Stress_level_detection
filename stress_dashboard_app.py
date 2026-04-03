@@ -138,24 +138,26 @@ if uploaded_file:
         st.pyplot(fig_roc)
 
     # ------------------ PREDICTION ------------------
-    if section == "Prediction":
-
+       if section == "Prediction":
+    
         st.subheader("🔮 Predict Stress Level")
-
+    
         c1, c2, c3 = st.columns(3)
-
+    
         study = c1.number_input("Study Hours", 0.0, 24.0, 5.0)
         sleep = c2.number_input("Sleep Hours", 0.0, 24.0, 7.0)
         activity = c3.number_input("Activity Hours", 0.0, 10.0, 1.0)
+    
         name = st.text_input("Enter Your Name")
+    
         if st.button("Predict"):
-            
+    
+            # ✅ validation inside same block
             if name.strip() == "":
                 st.warning("⚠️ Please enter your name")
                 st.stop()
-                
-        if st.button("Predict"):
-
+    
+            # ✅ prediction
             pred = model.predict([[study, sleep, activity]])
             result = le.inverse_transform(pred)[0]
 
