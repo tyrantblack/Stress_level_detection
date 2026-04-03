@@ -8,7 +8,7 @@ import random
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, label_binarize
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_curve, auc
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_curve
 from sklearn.ensemble import RandomForestClassifier
 from imblearn.over_sampling import SMOTE
 
@@ -35,7 +35,37 @@ if uploaded_file:
         "Physical_Activity_Hours_Per_Day"
     ]
 
+    # Drop missing values
     df = df.dropna(subset=selected_features + ["Stress_Level"])
+
+    # ------------------ EDA ------------------
+    if section == "Upload & EDA":
+
+        st.subheader("📊 Dataset Preview")
+        st.dataframe(df.head())
+
+        st.subheader("📌 Summary Statistics")
+        st.dataframe(df.describe())
+
+        st.subheader("📈 Feature Distributions")
+
+        col1, col2, col3 = st.columns(3)
+
+        for i, col in enumerate(selected_features):
+            fig, ax = plt.subplots(figsize=(3,3))
+            sns.histplot(df[col], kde=True, ax=ax)
+            ax.set_title(col.replace("_", " "))
+            [col1, col2, col3][i].pyplot(fig)
+
+        st.subheader("📦 Feature vs Stress")
+
+        c1, c2, c3 = st.columns(3)
+
+        for i, col in enumerate(selected_features):
+            fig, ax = plt.subplots(figsize=(3,3))
+            sns.boxplot(x=df["Stress_Level"], y=df[col], ax=ax)
+            ax.set_title(col.replace("_", " "))
+            [c1, c2, c3][i].pyplot(fig)
 
     # ------------------ MODEL PREP ------------------
     le = LabelEncoder()
@@ -44,6 +74,7 @@ if uploaded_file:
     np.random.seed(42)
     random.seed(42)
 
+    # Add noise (optional realism)
     noise_idx = np.random.choice(len(df), size=int(0.1 * len(df)), replace=False)
     df.loc[noise_idx, 'Stress_Level'] = np.random.randint(0, df['Stress_Level'].nunique(), len(noise_idx))
 
@@ -57,42 +88,52 @@ if uploaded_file:
     sm = SMOTE(random_state=42)
     X_train, y_train = sm.fit_resample(X_train, y_train)
 
-    model = RandomForestClassifier(n_estimators=300, random_state=42)
+    model = RandomForestClassifier(
+        n_estimators=300,
+        max_depth=10,
+        min_samples_split=5,
+        min_samples_leaf=2,
+        max_features='sqrt',
+        random_state=42
+    )
+
     model.fit(X_train, y_train)
 
     # ------------------ MODEL PERFORMANCE ------------------
     if section == "Model Performance":
 
-        y_pred = model.predict(X_test)
-
         st.subheader("🤖 Model Performance")
 
-        st.write(f"Accuracy: {round(accuracy_score(y_test, y_pred),2)}")
+        y_pred = model.predict(X_test)
+
+        st.write(f"### Accuracy: {round(accuracy_score(y_test, y_pred), 2)}")
         st.text(classification_report(y_test, y_pred))
 
-        fig_cm, ax = plt.subplots()
-        sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt="d", ax=ax)
+        fig_cm, ax = plt.subplots(figsize=(4,3))
+        sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt="d", cmap="Blues", ax=ax)
         st.pyplot(fig_cm)
 
-        # ROC
-        y_bin = label_binarize(y_test, classes=np.unique(y))
+        # ROC Curve
+        y_test_bin = label_binarize(y_test, classes=np.unique(y))
         y_score = model.predict_proba(X_test)
 
-        fig, ax = plt.subplots()
+        fig_roc, ax = plt.subplots(figsize=(4,3))
         for i in range(len(np.unique(y))):
-            fpr, tpr, _ = roc_curve(y_bin[:, i], y_score[:, i])
-            ax.plot(fpr, tpr, label=f"Class {i} (AUC={auc(fpr,tpr):.2f})")
+            fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_score[:, i])
+            ax.plot(fpr, tpr, label=f"Class {i}")
         ax.legend()
-        st.pyplot(fig)
+        st.pyplot(fig_roc)
 
     # ------------------ PREDICTION ------------------
     if section == "Prediction":
 
         st.subheader("🔮 Predict Stress Level")
 
-        study = st.number_input("Study Hours", 0.0, 24.0, 5.0)
-        sleep = st.number_input("Sleep Hours", 0.0, 24.0, 7.0)
-        activity = st.number_input("Activity Hours", 0.0, 10.0, 1.0)
+        c1, c2, c3 = st.columns(3)
+
+        study = c1.number_input("Study Hours", 0.0, 24.0, 5.0)
+        sleep = c2.number_input("Sleep Hours", 0.0, 24.0, 7.0)
+        activity = c3.number_input("Activity Hours", 0.0, 10.0, 1.0)
 
         if st.button("Predict"):
 
@@ -103,75 +144,83 @@ if uploaded_file:
 
             if result.lower() == "high":
                 st.error("🔴 HIGH STRESS")
-
-                st.write("• Increase sleep duration to 7–8 hours daily")
-                st.write("• Reduce excessive study hours")
-                st.write("• Follow structured study techniques")
-                st.write("• Engage in physical activity")
+                st.write("• Increase sleep (7–8 hrs)")
+                st.write("• Reduce study overload")
+                st.write("• Add physical activity")
                 st.write("• Practice mindfulness")
-                st.write("• Take regular breaks")
 
             elif result.lower() == "medium":
                 st.warning("🟡 MEDIUM STRESS")
-
-                st.write("• Maintain balance between study and rest")
-                st.write("• Avoid last-minute workload")
-                st.write("• Include light physical activity")
-                st.write("• Maintain proper sleep schedule")
-                st.write("• Take short breaks")
+                st.write("• Maintain balance")
+                st.write("• Avoid last-minute work")
+                st.write("• Light exercise")
 
             else:
                 st.success("🟢 LOW STRESS")
-
-                st.write("• Maintain current routine")
-                st.write("• Stay consistent with habits")
-                st.write("• Stay active and organized")
-
-            # ✅ FIXED POSITION (IMPORTANT)
-            st.subheader("📌 Personalized Insights")
-
-            if study > 10:
-                st.warning("• High study hours detected — reduce workload")
-
-            if sleep < 6:
-                st.warning("• Low sleep detected — increase rest")
-
-            if activity < 1:
-                st.warning("• Low physical activity — increase movement")
+                st.write("• Maintain routine")
+                st.write("• Stay consistent")
 
     # ------------------ BATCH TEST ------------------
     if section == "Batch Testing":
+
+        st.subheader("📂 Upload Test Dataset")
 
         test_file = st.file_uploader("Upload Excel", type=["xlsx"])
 
         if test_file:
 
             new_df = pd.read_excel(test_file)
+
+            st.write("🔍 Raw Columns Detected:")
+            st.write(list(new_df.columns))
+
+            # Clean column names
             new_df.columns = new_df.columns.str.strip()
 
-            missing = [c for c in selected_features if c not in new_df.columns]
+            # Check required columns
+            missing_cols = [col for col in selected_features if col not in new_df.columns]
 
-            if missing:
-                st.error(f"Missing columns: {missing}")
+            if missing_cols:
+                st.error(f"❌ Missing required columns: {missing_cols}")
                 st.stop()
+
+            st.subheader("📊 Cleaned Dataset Preview")
+            st.dataframe(new_df.head())
 
             X_new = new_df[selected_features]
 
             preds = model.predict(X_new)
             new_df["Predicted_Stress"] = le.inverse_transform(preds)
 
+            st.subheader("📊 Predictions")
             st.dataframe(new_df.head())
 
+            # ------------------ PERFORMANCE ------------------
             if "Stress_Level" in new_df.columns:
 
-                y_true = le.transform(new_df["Stress_Level"])
+                try:
+                    y_true = le.transform(new_df["Stress_Level"])
 
-                st.write(f"Accuracy: {round(accuracy_score(y_true, preds),2)}")
-                st.text(classification_report(y_true, preds))
+                    st.subheader("🤖 Test Dataset Performance")
 
-                fig, ax = plt.subplots()
-                sns.heatmap(confusion_matrix(y_true, preds), annot=True, fmt="d", ax=ax)
-                st.pyplot(fig)
+                    acc = accuracy_score(y_true, preds)
+                    st.write(f"Accuracy: {round(acc, 2)}")
+
+                    st.text(classification_report(y_true, preds))
+
+                    fig_cm, ax = plt.subplots()
+                    sns.heatmap(confusion_matrix(y_true, preds), annot=True, fmt="d", cmap="Blues", ax=ax)
+                    st.pyplot(fig_cm)
+
+                except:
+                    st.warning("⚠️ Stress_Level format mismatch. Cannot evaluate.")
+
+            # ------------------ DOWNLOAD ------------------
+            output = BytesIO()
+            new_df.to_excel(output, index=False)
+            output.seek(0)
+
+            st.download_button("📥 Download Results", output, "results.xlsx")
 
 else:
-    st.info("Upload dataset first")
+    st.info("📌 Please upload a training dataset to proceed.")
