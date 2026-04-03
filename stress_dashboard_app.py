@@ -310,13 +310,13 @@ if section == "Batch Testing":
         output.seek(0)
 
         st.download_button("📥 Download Results", output, "results.xlsx")
-# 🔥 ADDITION 5: SUMMARY
-st.sidebar.subheader("📌 Model Summary")
-st.sidebar.write(f"""
-Samples: {len(df)}
-Features: {selected_features}
-Model: Random Forest
-SMOTE Applied
+        # 🔥 ADDITION 5: SUMMARY
+        st.sidebar.subheader("📌 Model Summary")
+        st.sidebar.write(f"""
+        Samples: {len(df)}
+        Features: {selected_features}
+        Model: Random Forest
+        SMOTE Applied
 """)
 
 
