@@ -185,16 +185,16 @@ if uploaded_file:
                 st.write("• Monitor stress levels periodically to avoid sudden spikes")
                 st.write("• Maintain social interaction and positive habits")
                 
-    st.subheader("📌 Personalized Insights")
-    
-    if study > 10:
-        st.write("• High study hours detected — consider reducing workload")
-    
-    if sleep < 6:
-        st.write("• Low sleep detected — increase rest time")
-    
-    if activity < 1:
-        st.write("• Low physical activity — try to include exercise in routine")
+                st.subheader("📌 Personalized Insights")
+                
+                if study > 10:
+                    st.write("• High study hours detected — consider reducing workload")
+                
+                if sleep < 6:
+                    st.write("• Low sleep detected — increase rest time")
+                
+                if activity < 1:
+                    st.write("• Low physical activity — try to include exercise in routine")
 
     # ------------------ BATCH TEST ------------------
     if section == "Batch Testing":
