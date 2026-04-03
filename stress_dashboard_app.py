@@ -39,34 +39,74 @@ if uploaded_file:
     df = df.dropna(subset=selected_features + ["Stress_Level"])
 
     # ------------------ EDA ------------------
-    if section == "Upload & EDA":
+if section == "Upload & EDA":
 
-        st.subheader("📊 Dataset Preview")
-        st.dataframe(df.head())
+    st.subheader("📊 Dataset Preview")
+    st.dataframe(df.head())
 
-        st.subheader("📌 Summary Statistics")
-        st.dataframe(df.describe())
+    st.subheader("📌 Summary Statistics")
+    st.dataframe(df.describe())
 
-        st.subheader("📈 Feature Distributions")
+    # ------------------ DISTRIBUTIONS ------------------
+    st.subheader("📈 Feature Distributions")
 
-        col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3)
 
-        for i, col in enumerate(selected_features):
-            fig, ax = plt.subplots(figsize=(3,3))
-            sns.histplot(df[col], kde=True, ax=ax)
-            ax.set_title(col.replace("_", " "))
-            [col1, col2, col3][i].pyplot(fig)
+    for i, col in enumerate(selected_features):
+        fig, ax = plt.subplots(figsize=(3,3))
+        sns.histplot(df[col], kde=True, ax=ax)
+        ax.set_title(col.replace("_", " "))
+        [col1, col2, col3][i].pyplot(fig)
 
-        st.subheader("📦 Feature vs Stress")
+    # ------------------ BOXPLOT ------------------
+    st.subheader("📦 Feature vs Stress")
 
-        c1, c2, c3 = st.columns(3)
+    c1, c2, c3 = st.columns(3)
 
-        for i, col in enumerate(selected_features):
-            fig, ax = plt.subplots(figsize=(3,3))
-            sns.boxplot(x=df["Stress_Level"], y=df[col], ax=ax)
-            ax.set_title(col.replace("_", " "))
-            [c1, c2, c3][i].pyplot(fig)
+    for i, col in enumerate(selected_features):
+        fig, ax = plt.subplots(figsize=(3,3))
+        sns.boxplot(x=df["Stress_Level"], y=df[col], ax=ax)
+        ax.set_title(col.replace("_", " "))
+        [c1, c2, c3][i].pyplot(fig)
 
+    # ------------------ SPEARMAN CORRELATION ------------------
+    st.subheader("🔗 Spearman Correlation Heatmap")
+
+    corr = df[selected_features + ["Stress_Level"]].corr(method='spearman')
+
+    fig, ax = plt.subplots()
+    sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
+    st.pyplot(fig)
+
+    # ------------------ STRESS DISTRIBUTION ------------------
+    st.subheader("📊 Stress Level Distribution")
+
+    fig, ax = plt.subplots()
+    df["Stress_Level"].value_counts().plot(kind="bar", ax=ax)
+    ax.set_title("Stress Level Count")
+    st.pyplot(fig)
+
+    # ------------------ GROUPED ANALYSIS ------------------
+    st.subheader("📊 Average Feature Values per Stress Level")
+
+    grouped = df.groupby("Stress_Level")[selected_features].mean()
+    st.dataframe(grouped)
+
+    fig, ax = plt.subplots()
+    grouped.plot(kind="bar", ax=ax)
+    st.pyplot(fig)
+
+    # ------------------ OUTLIER ANALYSIS ------------------
+    st.subheader("⚠️ Outlier Detection (IQR Method)")
+
+    for col in selected_features:
+        q1 = df[col].quantile(0.25)
+        q3 = df[col].quantile(0.75)
+        iqr = q3 - q1
+
+        outliers = df[(df[col] < q1 - 1.5*iqr) | (df[col] > q3 + 1.5*iqr)]
+
+        st.write(f"{col}: {len(outliers)} outliers detected")
     # ------------------ MODEL PREP ------------------
     le = LabelEncoder()
     df["Stress_Level"] = le.fit_transform(df["Stress_Level"])
