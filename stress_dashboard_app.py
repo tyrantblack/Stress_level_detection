@@ -8,7 +8,7 @@ import random
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, label_binarize
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_curve
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier
 from imblearn.over_sampling import SMOTE
 
@@ -74,7 +74,6 @@ if uploaded_file:
     np.random.seed(42)
     random.seed(42)
 
-    # Add noise (optional realism)
     noise_idx = np.random.choice(len(df), size=int(0.1 * len(df)), replace=False)
     df.loc[noise_idx, 'Stress_Level'] = np.random.randint(0, df['Stress_Level'].nunique(), len(noise_idx))
 
@@ -99,6 +98,14 @@ if uploaded_file:
 
     model.fit(X_train, y_train)
 
+    # 🔥 ADDITION 1: FEATURE IMPORTANCE (SAFE ADD)
+    st.sidebar.subheader("📊 Feature Importance")
+    importance = pd.DataFrame({
+        "Feature": selected_features,
+        "Importance": model.feature_importances_
+    }).sort_values(by="Importance", ascending=False)
+    st.sidebar.dataframe(importance)
+
     # ------------------ MODEL PERFORMANCE ------------------
     if section == "Model Performance":
 
@@ -106,21 +113,27 @@ if uploaded_file:
 
         y_pred = model.predict(X_test)
 
-        st.write(f"### Accuracy: {round(accuracy_score(y_test, y_pred), 2)}")
+        # 🔥 ADDITION 2: KPI CARDS
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Accuracy", round(accuracy_score(y_test, y_pred), 2))
+        c2.metric("Train Size", len(X_train))
+        c3.metric("Test Size", len(X_test))
+
         st.text(classification_report(y_test, y_pred))
 
         fig_cm, ax = plt.subplots(figsize=(4,3))
         sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt="d", cmap="Blues", ax=ax)
         st.pyplot(fig_cm)
 
-        # ROC Curve
+        # ROC
         y_test_bin = label_binarize(y_test, classes=np.unique(y))
         y_score = model.predict_proba(X_test)
 
         fig_roc, ax = plt.subplots(figsize=(4,3))
         for i in range(len(np.unique(y))):
             fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_score[:, i])
-            ax.plot(fpr, tpr, label=f"Class {i}")
+            roc_auc = auc(fpr, tpr)
+            ax.plot(fpr, tpr, label=f"Class {i} (AUC={roc_auc:.2f})")
         ax.legend()
         st.pyplot(fig_roc)
 
@@ -174,10 +187,8 @@ if uploaded_file:
             st.write("🔍 Raw Columns Detected:")
             st.write(list(new_df.columns))
 
-            # Clean column names
             new_df.columns = new_df.columns.str.strip()
 
-            # Check required columns
             missing_cols = [col for col in selected_features if col not in new_df.columns]
 
             if missing_cols:
@@ -195,7 +206,10 @@ if uploaded_file:
             st.subheader("📊 Predictions")
             st.dataframe(new_df.head())
 
-            # ------------------ PERFORMANCE ------------------
+            # 🔥 ADDITION 3: DISTRIBUTION
+            st.subheader("📊 Prediction Distribution")
+            st.bar_chart(new_df["Predicted_Stress"].value_counts())
+
             if "Stress_Level" in new_df.columns:
 
                 try:
@@ -212,15 +226,35 @@ if uploaded_file:
                     sns.heatmap(confusion_matrix(y_true, preds), annot=True, fmt="d", cmap="Blues", ax=ax)
                     st.pyplot(fig_cm)
 
+                    # 🔥 ADDITION 4: ROC FOR BATCH
+                    y_bin = label_binarize(y_true, classes=np.unique(y))
+                    y_score = model.predict_proba(X_new)
+
+                    fig_roc, ax = plt.subplots()
+                    for i in range(len(np.unique(y))):
+                        fpr, tpr, _ = roc_curve(y_bin[:, i], y_score[:, i])
+                        roc_auc = auc(fpr, tpr)
+                        ax.plot(fpr, tpr, label=f"Class {i} (AUC={roc_auc:.2f})")
+                    ax.legend()
+                    st.pyplot(fig_roc)
+
                 except:
                     st.warning("⚠️ Stress_Level format mismatch. Cannot evaluate.")
 
-            # ------------------ DOWNLOAD ------------------
             output = BytesIO()
             new_df.to_excel(output, index=False)
             output.seek(0)
 
             st.download_button("📥 Download Results", output, "results.xlsx")
+
+    # 🔥 ADDITION 5: SUMMARY
+    st.sidebar.subheader("📌 Model Summary")
+    st.sidebar.write(f"""
+    Samples: {len(df)}
+    Features: {selected_features}
+    Model: Random Forest
+    SMOTE Applied
+    """)
 
 else:
     st.info("📌 Please upload a training dataset to proceed.")
