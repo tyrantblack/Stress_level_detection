@@ -13,7 +13,7 @@ from sklearn.ensemble import RandomForestClassifier
 from imblearn.over_sampling import SMOTE
 
 # ------------------ CONFIG ------------------
-st.set_page_config(page_title="Stress AI Dashboard", layout="wide")
+st.set_page_config(page_title="Stress AI Dashboard", layout="wide") 
 
 st.title("🧠 AI Stress Prediction Dashboard")
 st.markdown("#### Advanced ML System with Insights & Recommendations")
