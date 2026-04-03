@@ -70,13 +70,20 @@ if section == "Upload & EDA":
         [c1, c2, c3][i].pyplot(fig)
 
 # ------------------ SPEARMAN CORRELATION ------------------
+# ------------------ SPEARMAN CORRELATION ------------------
     st.subheader("🔗 Spearman Correlation Heatmap")
     
     corr_df = df[selected_features + ["Stress_Level"]].copy()
     
-    # Convert to numeric (fix for error)
-    for col in corr_df.columns:
-        corr_df[col] = pd.to_numeric(corr_df[col], errors='coerce')
+    # 🔥 Ensure Stress_Level is numeric
+    if corr_df["Stress_Level"].dtype == "object":
+        corr_df["Stress_Level"] = LabelEncoder().fit_transform(corr_df["Stress_Level"])
+    
+    # Convert all to numeric safely
+    corr_df = corr_df.apply(pd.to_numeric, errors='coerce')
+    
+    # Drop rows with NaN (important)
+    corr_df = corr_df.dropna()
     
     corr = corr_df.corr(method='spearman')
     
