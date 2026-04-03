@@ -184,8 +184,23 @@ if uploaded_file:
                 st.write("• Engage in hobbies and recreational activities")
                 st.write("• Monitor stress levels periodically to avoid sudden spikes")
                 st.write("• Maintain social interaction and positive habits")
-                
-                st.subheader("📌 Personalized Insights")
+                        
+            user_data = pd.DataFrame({
+                "Study_Hours": [study],
+                "Sleep_Hours": [sleep],
+                "Activity_Hours": [activity],
+                "Predicted_Stress": [result]
+            })
+        
+            try:
+                old_data = pd.read_csv("user_history.csv")
+                updated_data = pd.concat([old_data, user_data], ignore_index=True)
+            except:
+                updated_data = user_data
+        
+            updated_data.to_csv("user_history.csv", index=False)
+        
+            st.success("✅ Prediction saved successfully")         
                 
     # ------------------ BATCH TEST ------------------
     if section == "Batch Testing":
@@ -291,21 +306,4 @@ updated_data.to_csv("user_history.csv", index=False)
 
 st.success("✅ Prediction saved for future use")
 
-# ------------------ USER HISTORY ------------------
-if section == "User History":
 
-    st.subheader("📁 Saved User Predictions")
-
-    try:
-        hist_df = pd.read_csv("user_history.csv")
-
-        st.dataframe(hist_df)
-
-        st.subheader("📊 Stress Distribution")
-        st.bar_chart(hist_df["Predicted_Stress"].value_counts())
-
-        st.subheader("📈 Trends")
-        st.line_chart(hist_df[["Study_Hours", "Sleep_Hours", "Activity_Hours"]])
-
-    except:
-        st.warning("⚠️ No saved data found yet.")
