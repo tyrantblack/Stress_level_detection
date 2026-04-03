@@ -200,7 +200,26 @@ if uploaded_file:
         
             updated_data.to_csv("user_history.csv", index=False)
         
-            st.success("✅ Prediction saved successfully")         
+            st.success("✅ Prediction saved successfully")  
+
+    # ------------------ USER HISTORY ------------------
+    if section == "User History":
+
+        st.subheader("📁 Saved User Predictions")
+
+    import os
+
+    if os.path.exists("user_history.csv"):
+
+        hist_df = pd.read_csv("user_history.csv")
+
+        st.dataframe(hist_df)
+
+        st.subheader("📊 Stress Distribution")
+        st.bar_chart(hist_df["Predicted_Stress"].value_counts())
+
+    else:
+        st.warning("⚠️ No saved data yet")
                 
     # ------------------ BATCH TEST ------------------
     if section == "Batch Testing":
