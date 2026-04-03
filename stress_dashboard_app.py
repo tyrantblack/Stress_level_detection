@@ -187,14 +187,16 @@ if uploaded_file:
                 
                 st.subheader("📌 Personalized Insights")
                 
-                if Study_Hours_Per_Day > 10:
-                    st.write("• High study hours detected — consider reducing workload")
+st.subheader("📌 Personalized Insights")
                 
-                if "Sleep_Hours_Per_Day" < 6:
-                    st.write("• Low sleep detected — increase rest time")
+if study > 10:
+st.warning("• High study hours detected — consider reducing workload")
                 
-                if Physical_Activity_Hours_Per_Day < 1:
-                    st.write("• Low physical activity — try to include exercise in routine")
+if sleep < 6:
+st.warning("• Low sleep detected — increase rest time")
+                
+if activity < 1:
+st.warning("• Low physical activity — try to include exercise in routine")
 
     # ------------------ BATCH TEST ------------------
     if section == "Batch Testing":
