@@ -20,7 +20,7 @@ st.markdown("#### Advanced ML System with Insights & Recommendations")
 
 # ------------------ SIDEBAR ------------------
 st.sidebar.title("📌 Navigation")
-section = st.sidebar.radio("Go to:", ["Upload & EDA", "Model Performance", "Prediction", "Batch Testing"])
+section = st.sidebar.radio("Go to:", ["Upload & EDA", "Model Performance", "Prediction", "Batch Testing","User History" ])
 
 # ------------------ FILE UPLOAD ------------------
 uploaded_file = st.file_uploader("📂 Upload Training Dataset (CSV)", type=["csv"])
@@ -272,3 +272,40 @@ if uploaded_file:
 
 else:
     st.info("📌 Please upload a training dataset to proceed.")
+
+# ------------------ SAVE USER DATA ------------------
+user_data = pd.DataFrame({
+    "Study_Hours": [study],
+    "Sleep_Hours": [sleep],
+    "Activity_Hours": [activity],
+    "Predicted_Stress": [result]
+})
+
+try:
+    old_data = pd.read_csv("user_history.csv")
+    updated_data = pd.concat([old_data, user_data], ignore_index=True)
+except:
+    updated_data = user_data
+
+updated_data.to_csv("user_history.csv", index=False)
+
+st.success("✅ Prediction saved for future use")
+
+# ------------------ USER HISTORY ------------------
+if section == "User History":
+
+    st.subheader("📁 Saved User Predictions")
+
+    try:
+        hist_df = pd.read_csv("user_history.csv")
+
+        st.dataframe(hist_df)
+
+        st.subheader("📊 Stress Distribution")
+        st.bar_chart(hist_df["Predicted_Stress"].value_counts())
+
+        st.subheader("📈 Trends")
+        st.line_chart(hist_df[["Study_Hours", "Sleep_Hours", "Activity_Hours"]])
+
+    except:
+        st.warning("⚠️ No saved data found yet.")
